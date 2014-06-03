@@ -1,0 +1,11 @@
+{
+  "name": "Bluetooth Low Energy Battery Service Demo",
+  "description": "Battery Service Demo using chrome.bluetoothLowEnergy",
+  "version": "0.1",
+  "app": {
+    "background": {
+      "scripts": ["background.js"]
+    }
+  },
+  "bluetooth": {}
+}

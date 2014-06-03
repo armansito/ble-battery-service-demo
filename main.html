@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bluetooth LE Batter Service Demo</title>
+  <script src="script.js"></script>
+</head>
+<body>
+  <h1>Bluetooth LE Battery Service Demo</h1>
+  <div id="device-selection-div">
+    Select device with Battery Service: 
+    <select id="device-selector">
+      <option id="placeholder" value="" disabled selected>
+        No connected devices
+      </option>
+    </select>
+  </div>
+  <div id="no-devices-error">
+    No device with "Battery Service" selected.
+  </div>
+  <div id="device-info-fields">
+    <div class="device-info-field">
+      Battery Level: <span id="battery-level">-</span>
+    </div>
+  </div>
+</body>
+</html>
