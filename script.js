@@ -270,9 +270,11 @@ function main() {
 
     // See if this is the currently selected service. If so, unselect it.
     console.log('Battery service removed: ' + service.instanceId);
+    var selectedRemoved = false;
     if (batteryService && batteryService.instanceId == service.instanceId) {
       console.log('The selected service disappeared!');
       selectService(undefined);
+      selectedRemoved = true;
     }
 
     // Remove the associated device from the map only if it has no other Battery
@@ -310,6 +312,8 @@ function main() {
         console.log('Removing device: ' + device.address);
         delete batteryDevicesMap[device.address];
         updateDeviceSelector();
+        if (selectedRemoved)
+          deviceSelector.onchange();  // Forcefully select the next device.
       });
     });
   });
