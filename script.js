@@ -1,8 +1,10 @@
 // GATT Battery Service UUIDs
-var BATTERY_SERVICE_UUID = '0000180f-0000-1000-8000-00805f9b34fb';
+var BATTERY_SERVICE_UUID    = '0000180f-0000-1000-8000-00805f9b34fb';
+var BATTERY_LEVEL_CHRC_UUID = '00002a19-0000-1000-8000-00805f9b34fb';
 
 // The currently displayed service and characteristics.
 var batteryService;
+var batteryLevelCharacteristic;
 
 // A mapping from device addresses to device names for found devices that expose
 // a Battery service.
@@ -30,7 +32,82 @@ function selectService(service) {
 
   console.log('GATT service selected: ' + service.instanceId);
 
-  // TODO: handle characteristics.
+  // Get the characteristics of the selected service.
+  chrome.bluetoothLowEnergy.getCharacteristics(service.instanceId,
+                                               function (chrcs) {
+    if (chrome.runtime.lastError) {
+      console.log(chrome.runtime.lastError.message);
+      return;
+    }
+
+    // Make sure that the same service is still selected.
+    if (service.instanceId != batteryService.instanceId)
+      return;
+
+    if (chrcs.length == 0) {
+      console.log('Service has no characteristics: ' + service.instanceId);
+      return;
+    }
+
+    chrcs.forEach(function (chrc) {
+      // This service should have only one characteristic.
+      if (chrc.uuid != BATTERY_LEVEL_CHRC_UUID) {
+        console.log('Found unexpected characteristic: ' + chrc.instanceId +
+                    ' with UUID: ' + chrc.uuid);
+        return;
+      }
+
+      console.log('Setting Battery Level characteristic: ' + chrc.instanceId);
+      batteryLevelCharacteristic = chrc;
+
+      // Read the value of the characteristic once and store it. The Battery
+      // Level characteristic must support both reads and notifications, so
+      // we will track the value via both.
+      chrome.bluetoothLowEnergy.readCharacteristicValue(chrc.instanceId,
+                                                        function (readChrc) {
+        if (chrome.runtime.lastError) {
+          console.log(chrome.runtime.lastError.message);
+          return;
+        }
+
+        // Make sure that the same characteristic is still selected.
+        if (readChrc.instanceId != batteryLevelCharacteristic.instanceId)
+          return;
+
+        // No need the update the value here, as a successful read will trigger
+        // the onCharacteristicValueChanged event. We will perform the update in
+        // the listener instead.
+      });
+    });
+  });
+}
+
+/**
+ * Updates the Battery Level field based on the value of the currently selected
+ * Battery Level characteristic.
+ */
+function updateBatteryLevelValue() {
+  if (!batteryLevelCharacteristic) {
+    console.log('No Battery Level Characteristic selected');
+    return;
+  }
+
+  // Value field might be undefined  if the read request failed or no
+  // notification has been received yet.
+  if (!batteryLevelCharacteristic.value) {
+    console.log('No Battery Level value received yet');
+    return;
+  }
+
+  var valueBytes = new Uint8Array(batteryLevelCharacteristic.value);
+
+  // The value should contain a single byte.
+  if (valueBytes.length != 1) {
+    console.log('Invalid Battery Level value length: ' + valueBytes.length);
+    return;
+  }
+
+  setFieldValue('battery-level', valueBytes[0] + ' %');
 }
 
 /**
@@ -247,6 +324,20 @@ function main() {
 
     // Reselect the service to force an updated.
     selectService(service);
+  });
+
+  // Track GATT characteristic value changes. This event will be triggered after
+  // successful characteristic value reads and received notifications and
+  // indications.
+  chrome.bluetoothLowEnergy.onCharacteristicValueChanged.addListener(
+      function (chrc) {
+    if (batteryLevelCharacteristic &&
+        chrc.instanceId == batteryLevelCharacteristic.instanceId) {
+      console.log('Battery Level value changed');
+      batteryLevelCharacteristic = chrc;
+      updateBatteryLevelValue();
+      return;
+    }
   });
 }
 
