@@ -7,5 +7,8 @@
       "scripts": ["background.js"]
     }
   },
-  "bluetooth": {}
+  "bluetooth": {
+    "low_energy": true,
+    "uuids": ["180f"]
+  }
 }
