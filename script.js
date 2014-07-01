@@ -33,6 +33,7 @@ function selectService(service) {
   }
 
   batteryLevelCharacteristic = undefined;
+  updateBatteryLevelValue();  // Initialize to unknown
 
   if (!service) {
     console.log('No service selected.');
@@ -108,12 +109,35 @@ function selectService(service) {
 }
 
 /**
+ * Updates the battery level UI based on the given value.
+ */
+function updateBatteryLevelUI(level, unknown) {
+  // Set the text content
+  setFieldValue('battery-level', unknown ? '-' : level + ' %');
+
+  // Update the battery level image.
+  var batteryLevelBox = document.getElementById('battery-level-box');
+
+  var levelClass;
+  if (level> 65)
+    levelClass = 'high';
+  else if (level > 30)
+    levelClass = 'medium';
+  else
+    levelClass = 'low';
+
+  batteryLevelBox.className = 'level ' + levelClass;
+  batteryLevelBox.style.width = level + '%';
+}
+
+/**
  * Updates the Battery Level field based on the value of the currently selected
  * Battery Level characteristic.
  */
 function updateBatteryLevelValue() {
   if (!batteryLevelCharacteristic) {
     console.log('No Battery Level Characteristic selected');
+    updateBatteryLevelUI(0, true);
     return;
   }
 
@@ -133,23 +157,7 @@ function updateBatteryLevelValue() {
   }
 
   var batteryLevel = valueBytes[0];
-
-  // Set the text content
-  setFieldValue('battery-level', batteryLevel + ' %');
-
-  // Update the battery level image.
-  var batteryLevelBox = document.getElementById('battery-level-box');
-
-  var levelClass;
-  if (batteryLevel > 65)
-    levelClass = 'high';
-  else if (batteryLevel > 30)
-    levelClass = 'medium';
-  else
-    levelClass = 'low';
-
-  batteryLevelBox.className = 'level ' + levelClass;
-  batteryLevelBox.style.width = batteryLevel + '%';
+  updateBatteryLevelUI(batteryLevel, false);
 }
 
 /**
