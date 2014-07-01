@@ -9,8 +9,6 @@ chrome.app.runtime.onLaunched.addListener(function() {
       'maxHeight': 274,
       'left': 100,
       'top': 100
-    },
-    minWidth: 450,
-    minHeight: 150
+    }
   });
 });

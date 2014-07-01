@@ -1,13 +1,13 @@
 body {
   margin: 0;
   overflow: hidden;
+  height: 274px;
 }
 
 #header {
   padding: 10px 15px 5px 15px;
   background: #fafafa;
   box-shadow: 0 0 5px #858585;
-  margin-bottom: 20px;
 }
 
 #header img {
@@ -61,5 +61,58 @@ hr {
 #no-devices-error {
   font-size: 10pt;
   text-align: center;
-  padding-top: 7%;
+  padding-top: 10%;
+}
+
+#device-info-fields {
+  position: relative;
+  margin: auto;
+  width: 185px;
+  height: 80px;
+  top: 15%;
+}
+
+.battery {
+  z-index: -1;
+  position: relative;
+  width: 97%;
+  height: 100%;
+  border: 7px solid black;
+  box-sizing: border-box;
+}
+
+.battery .level {
+  position: absolute;
+  height: 100%;
+}
+
+.battery .level.high {
+  background-color: green;
+}
+
+.battery .level.medium {
+  background-color: orange;
+}
+
+.battery .level.low {
+  background-color: red;
+}
+
+.battery-tip {
+  position: absolute;
+  left: 97%;
+  background-color: black;
+  width: 3%;
+  height: 30%;
+  top: 35%;
+}
+
+#battery-level {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  color: black;
+  font-size: 3em;
+  padding-top: 3%
 }

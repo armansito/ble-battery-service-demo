@@ -132,7 +132,24 @@ function updateBatteryLevelValue() {
     return;
   }
 
-  setFieldValue('battery-level', valueBytes[0] + ' %');
+  var batteryLevel = valueBytes[0];
+
+  // Set the text content
+  setFieldValue('battery-level', batteryLevel + ' %');
+
+  // Update the battery level image.
+  var batteryLevelBox = document.getElementById('battery-level-box');
+
+  var levelClass;
+  if (batteryLevel > 65)
+    levelClass = 'high';
+  else if (batteryLevel > 30)
+    levelClass = 'medium';
+  else
+    levelClass = 'low';
+
+  batteryLevelBox.className = 'level ' + levelClass;
+  batteryLevelBox.style.width = batteryLevel + '%';
 }
 
 /**
