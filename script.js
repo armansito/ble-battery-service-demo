@@ -25,6 +25,15 @@ function selectService(service) {
 
   batteryService = service;
 
+  // Disable notifications from the currently selected Battery Level
+  // characteristic.
+  if (batteryLevelCharacteristic) {
+    chrome.bluetoothLowEnergy.stopCharacteristicNotifications(
+        batteryLevelCharacteristic.instanceId);
+  }
+
+  batteryLevelCharacteristic = undefined;
+
   if (!service) {
     console.log('No service selected.');
     return;
@@ -60,23 +69,39 @@ function selectService(service) {
       console.log('Setting Battery Level characteristic: ' + chrc.instanceId);
       batteryLevelCharacteristic = chrc;
 
-      // Read the value of the characteristic once and store it. The Battery
-      // Level characteristic must support both reads and notifications, so
-      // we will track the value via both.
-      chrome.bluetoothLowEnergy.readCharacteristicValue(chrc.instanceId,
-                                                        function (readChrc) {
-        if (chrome.runtime.lastError) {
-          console.log(chrome.runtime.lastError.message);
+      // Enable notifications from the characteristic.
+      chrome.bluetoothLowEnergy.startCharacteristicNotifications(
+          chrc.instanceId,
+          function () {
+        if (chrome.runtime.lastError &&
+            chrome.runtime.lastError.message != 'Already notifying') {
+          console.log('Failed to enable Battery Level notifications: ' +
+                      chrome.runtime.lastError.message);
           return;
         }
 
-        // Make sure that the same characteristic is still selected.
-        if (readChrc.instanceId != batteryLevelCharacteristic.instanceId)
-          return;
+        console.log('Battery Level notifications enabled! Sending request to ' +
+                    'read current battery level.');
 
-        // No need the update the value here, as a successful read will trigger
-        // the onCharacteristicValueChanged event. We will perform the update in
-        // the listener instead.
+        // Read the value of the characteristic once and store it. The Battery
+        // Level characteristic must support both reads and notifications, so
+        // we will track the value via both.
+        chrome.bluetoothLowEnergy.readCharacteristicValue(chrc.instanceId,
+                                                          function (readChrc) {
+          if (chrome.runtime.lastError) {
+            console.log(chrome.runtime.lastError.message);
+            return;
+          }
+
+          // Make sure that the same characteristic is still selected.
+          if (readChrc.instanceId != batteryLevelCharacteristic.instanceId)
+            return;
+
+          // No need the update the value here, as a successful read will trigger
+          // the onCharacteristicValueChanged event. We will perform the update in
+          // the listener instead.
+          console.log('Request to read battery level complete.');
+        });
       });
     });
   });
@@ -165,6 +190,38 @@ function updateDeviceSelector() {
 function main() {
   // Set up the UI to look like no device was initially selected.
   selectService(undefined);
+
+  // Request information about the local Bluetooth adapter to be displayed in
+  // the UI.
+  var updateAdapterState = function (adapterState) {
+    var addressField = document.getElementById('adapter-address');
+    var nameField = document.getElementById('adapter-name');
+
+    var setAdapterField = function (field, value) {
+      field.innerHTML = '';
+      field.appendChild(document.createTextNode(value));
+    };
+
+    if (!adapterState) {
+      setAdapterField(nameField, 'No adapter');
+      setAdapterField(addressField, 'unknown');
+      return;
+    }
+
+    setAdapterField(addressField,
+                    adapterState.address ? adapterState.address : 'unknown');
+    setAdapterField(nameField,
+                    adapterState.name ? adapterState.name : 'Local Adapter');
+  };
+
+  chrome.bluetooth.getAdapterState(function (adapterState) {
+    if (chrome.runtime.lastError)
+      console.log(chrome.runtime.lastError.message);
+
+    updateAdapterState(adapterState);
+  });
+
+  chrome.bluetooth.onAdapterStateChanged.addListener(updateAdapterState);
 
   // Initialize |batteryDevicesMap|.
   chrome.bluetooth.getDevices(function (devices) {
